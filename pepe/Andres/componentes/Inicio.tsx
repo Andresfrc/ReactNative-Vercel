@@ -12,7 +12,7 @@ export default function Inicio({navigation}) {
 
     const handleLogin = async () => {
         try {
-                const res = await fetch("http://10.1.245.221:5000/login", {
+                const res = await fetch("https://backend-reactnative.vercel.app/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

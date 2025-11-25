@@ -12,7 +12,7 @@ export default function Registro({ navigation }) {
 
     const handleRegistro = async () => {
         try {
-            const res = await fetch("http://10.1.245.221:5000/register", {
+            const res = await fetch("https://backend-reactnative.vercel.app/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
