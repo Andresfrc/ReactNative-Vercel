@@ -5,6 +5,8 @@ import Inicio from "./componentes/Inicio";
 import Tablero from './componentes/Tablero';
 import Registro from './componentes/Registro';
 import { enableScreens } from 'react-native-screens';
+import './notifiactionHandler';
+
 
 enableScreens()
 

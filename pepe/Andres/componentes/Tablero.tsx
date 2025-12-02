@@ -4,6 +4,8 @@ import estilos from "../componentes/Estilos/Style";
 import RenderItem from "../componentes/pages/RenderItem";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { scheduleTaskNotification } from "../notifiactionHandler";
+import * as Notifications from 'expo-notifications';
 
 export interface Task {
   title: string;
@@ -27,19 +29,30 @@ export default function Tablero() {
     }
   };
 
-  // Obtener datos
+  // Obtener datos - Convertir strings a Date
   const getData = async () => {
     try {
       const value = await AsyncStorage.getItem("my-todo");
       if (value !== null) {
         const tasksLocal = JSON.parse(value);
-        setTasks(tasksLocal);
+        // ✅ Convertir strings de fecha a objetos Date
+        const tasksWithDates = tasksLocal.map((task: any) => ({
+          ...task,
+          date: new Date(task.date),
+        }));
+        setTasks(tasksWithDates);
       }
     } catch (error) {
       console.error("Error al cargar:", error);
     }
   };
 
+  // Solicitar permisos al iniciar
+  useEffect(() => {
+    Notifications.requestPermissionsAsync();
+  }, []);
+
+  // Cargar tareas al iniciar
   useEffect(() => {
     getData();
   }, []);
@@ -64,8 +77,8 @@ export default function Tablero() {
     }
   };
 
-  // Agregar tarea
-  const addTask = () => {
+  // Agregar tarea - ✅ Programar notificación aquí
+  const addTask = async () => {
     if (text.trim() === "") return;
 
     const newTask: Task = {
@@ -78,17 +91,35 @@ export default function Tablero() {
     setTasks(tmp);
     storeData(tmp);
     setText("");
-    setDate(new Date());
+    
+    // ✅ Programar notificación solo si la fecha es futura
+    if (date > new Date()) {
+      await scheduleTaskNotification(newTask.title, date);
+      console.log(`✅ Notificación programada para: ${formatDate(date)}`);
+    } else {
+      console.log("⚠️ No se programó notificación (fecha pasada)");
+    }
+    
+    setDate(new Date()); // Resetear fecha después de agregar
   };
 
-  // Marcar como completada
-  const markDone = (task: Task) => {
+  // Marcar como completada - ✅ Reprogramar si se desmarca
+  const markDone = async (task: Task) => {
     const tmp = [...tasks];
     const index = tmp.findIndex((el) => el.title === task.title);
     if (index !== -1) {
       tmp[index].done = !tmp[index].done;
       setTasks(tmp);
       storeData(tmp);
+      
+      // ✅ Reprogramar solo si se desmarca Y la fecha es futura
+      if (!tmp[index].done && new Date(tmp[index].date) > new Date()) {
+        await scheduleTaskNotification(
+          tmp[index].title,
+          new Date(tmp[index].date)
+        );
+        console.log(`✅ Notificación reprogramada: ${tmp[index].title}`);
+      }
     }
   };
 
